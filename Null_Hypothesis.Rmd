@@ -1,0 +1,246 @@
+---
+title: "Understanding Null Hypothesis in Statistical Testing"
+output: 
+  learnr::tutorial:
+    css: ["custom.css"]
+    includes:
+      in_header: "header.html"
+    theme: cosmo
+    progressive: true
+    allow_skip: true
+    highlight: tango
+    fig_caption: yes
+runtime: shiny_prerendered
+description: "A comprehensive interactive tutorial on understanding and interpreting null hypothesis in statistical testing"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(knitr)
+library(DT)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  comment = ""
+)
+
+# Custom styling for better visuals
+tutorial_options(
+  exercise.timelimit = 60,
+  exercise.checker = NULL
+)
+```
+
+## Welcome to Null Hypothesis Tutorial {.tabset .tabset-fade .tabset-pills}
+
+### Overview
+
+Welcome to this **comprehensive tutorial** on understanding the Null Hypothesis in statistical testing!
+
+**What you'll master:**
+
+- **Concept of Null Hypothesis** - Understanding what it is and why we use it
+- **Statistical Significance** - Making decisions based on data
+- **Type I and Type II Errors** - Understanding potential mistakes
+- **Real-world Applications** - Practical examples in research
+- **Interpretation** - Drawing proper conclusions
+
+### Learning Objectives
+
+By the end of this tutorial, you will be able to:
+
+- Define and explain the null hypothesis concept
+- Understand the relationship between null and alternative hypotheses
+- Make proper statistical decisions based on hypothesis testing
+- Identify and interpret Type I and Type II errors
+- Apply null hypothesis testing in real research scenarios
+
+## Understanding the Null Hypothesis
+
+### What is a Null Hypothesis?
+
+The **null hypothesis** ($H_0$) is a statistical hypothesis that posits there is <span style="color:red;">**no relationship**</span> between variables or <span style="color:red;">**no effect**</span> of a treatment. It serves as the default position that we try to reject with evidence.
+
+Let's have an example to illustrate this:
+
+Assume a researcher is testing a new drug. The null hypothesis would state that the drug has **no effect** on patients compared to a placebo. This means that any observed difference in outcomes is due to chance rather than the drug itself.
+
+
+So if the researcher finds that patients taking the drug have better outcomes, they would need to provide sufficient statistical evidence to reject the null hypothesis and support the alternative hypothesis ($H_1$), which states that the drug does have an effect.
+
+**Key Characteristics:**
+- States "no effect" or "no difference"
+
+- Always includes an equality (=)
+
+- Must be specific and testable
+
+- Cannot be proven true, only failed to be rejected
+
+### Real-World Example
+
+Let's consider a simple example:
+
+A researcher wants to test if a new study technique improves test scores. 
+
+- $H_0$: The new study technique has no effect on test scores
+
+- $H_1$: The new study technique affects test scores
+
+```{r null_viz, exercise=TRUE}
+# Simulate test scores data
+set.seed(123)
+control_scores <- rnorm(30, mean = 75, sd = 10)
+treatment_scores <- rnorm(30, mean = 80, sd = 10)
+
+# Create data frame
+scores_data <- data.frame(
+  Score = c(control_scores, treatment_scores),
+  Group = factor(rep(c("Traditional", "New Technique"), each = 30))
+)
+
+# Create visualization with only x-axis and left border (no grid, no top/right borders)
+ggplot(scores_data, aes(x = Group, y = Score, fill = Group)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "white") +
+  labs(title = "Test Scores: Traditional vs. New Study Technique",
+       subtitle = "White diamond indicates group mean",
+       y = "Test Score", x = "Study Method") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c")) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y.left = element_line(color = "black"),
+    axis.line.y.right = element_blank(),
+    axis.line.y = element_line(color = "black"),
+    axis.line = element_line(),
+    axis.ticks.y.right = element_blank(),
+    axis.ticks.y.left = element_line(color = "black"),
+    axis.ticks.x = element_line(color = "black"),
+    panel.border = element_blank(),
+    legend.position = "none"
+  )
+```
+
+This visualization shows the distribution of test scores for both groups. The null hypothesis states that there is no difference in scores between the two groups, while the alternative hypothesis suggests that the new technique leads to higher scores.
+
+
+### Understanding Type I and Type II Errors
+
+When testing hypotheses, two types of errors can occur:
+
+1. **Type I Error ($\alpha$)**: Rejecting $H_0$ when it's actually true
+
+   - Also called "false positive"
+
+   - Controlled by significance level (usually $0.05$)
+
+2. **Type II Error ($\beta$)**: Failing to reject $H_0$ when it's actually false
+
+   - Also called "false negative"
+   
+   - Related to statistical power (1 - $\beta$)
+
+```{r error_viz, exercise=TRUE}
+# Create decision matrix visualization
+library(gridExtra)
+
+# Create data for visualization
+decision_data <- expand.grid(
+  x = seq(-4, 4, length.out = 100),
+  Decision = c("Fail to Reject H₀", "Reject H₀")
+)
+
+# Add density values
+decision_data$y <- dnorm(decision_data$x)
+
+# Create plot
+ggplot(decision_data, aes(x = x, y = y)) +
+  geom_line(size = 1) +
+  geom_vline(xintercept = 1.96, linetype = "dashed", color = "#e74c3c") +
+  geom_vline(xintercept = -1.96, linetype = "dashed", color = "#e74c3c") +
+  annotate("text", x = 0, y = 0.3, label = "Fail to Reject H₀") +
+  annotate("text", x = 3, y = 0.3, label = "Reject H₀") +
+  annotate("text", x = -3, y = 0.3, label = "Reject H₀") +
+  labs(title = "Decision Regions in Hypothesis Testing",
+       subtitle = "Dashed lines represent critical values (α = 0.05)",
+       x = "Test Statistic", y = "Density") +
+  theme_minimal()
+```
+
+### Quiz Time!
+
+```{r null_quiz}
+quiz(
+  question("What is the main purpose of the null hypothesis?",
+    answer("To prove what the researcher believes is true"),
+    answer("To provide a default position that we attempt to reject with evidence", correct = TRUE,
+           message = "Correct! The null hypothesis serves as a baseline assumption that we try to disprove with statistical evidence."),
+    answer("To show that the research was successful"),
+    answer("To guarantee significant results"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  
+  question("Which of the following is a correctly stated null hypothesis?",
+    answer("The treatment group will perform better than the control group"),
+    answer("There is no difference between the treatment and control groups", correct = TRUE,
+           message = "Correct! A null hypothesis should state no effect or no difference."),
+    answer("The new medication will reduce symptoms"),
+    answer("The correlation between variables will be positive"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  
+  question("What happens when we reject the null hypothesis?",
+    answer("We prove the alternative hypothesis is true"),
+    answer("We prove the null hypothesis is false"),
+    answer("We conclude there is sufficient evidence to support the alternative hypothesis", correct = TRUE,
+           message = "Correct! Rejecting H₀ means we have enough evidence to support H₁, but we haven't proven anything with absolute certainty."),
+    answer("We automatically accept any alternative explanation"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+### Practice Exercise
+
+```{r null_practice, exercise=TRUE}
+# Let's practice writing null hypotheses
+# Here are some research scenarios. Write the null hypothesis for each:
+
+# 1. Testing if a new medication reduces blood pressure
+# H₀: _____
+
+# 2. Investigating if there's a relationship between study time and test scores
+# H₀: _____
+
+# 3. Comparing mean weight loss between two diets
+# H₀: _____
+```
+
+```{r null_practice-solution}
+# Correct null hypotheses would be:
+
+# 1. Testing if a new medication reduces blood pressure
+# H₀: There is no difference in blood pressure between the medication and control groups
+# or mathematically: H₀: μ₁ = μ₂
+
+# 2. Investigating if there's a relationship between study time and test scores
+# H₀: There is no correlation between study time and test scores
+# or mathematically: H₀: ρ = 0
+
+# 3. Comparing mean weight loss between two diets
+# H₀: There is no difference in mean weight loss between the two diet groups
+# or mathematically: H₀: μ₁ = μ₂
+```

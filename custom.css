@@ -1,0 +1,108 @@
+/* Custom fonts */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto:wght@400;500;700&display=swap');
+
+/* Base text styling */
+body {
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #2c3e50;
+}
+
+/* Main content text size increase */
+.tutorial-content p,
+.tutorial-content li,
+.tutorial-content div:not(.topics):not(.tutorial-exercise):not(.tutorial-question),
+.tutorial-content section {
+    font-size: 19.2px; /* 16px * 1.2 = 19.2px (20% increase) */
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+}
+
+h1 { font-size: 2.5em; }
+h2 { font-size: 2em; }
+h3 { font-size: 1.75em; }
+h4 { font-size: 1.5em; }
+
+/* Code blocks */
+pre, code {
+    font-family: 'Source Code Pro', Consolas, Monaco, 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Quiz and exercise sections */
+.tutorial-exercise {
+    font-size: 1em;
+    line-height: 1.6;
+}
+
+.quiz {
+    font-size: 1.32em; /* Increased by 20% from 1.1em */
+}
+
+/* Tutorial content */
+.tutorial-content {
+    line-height: 1.7;
+}
+
+/* Ensure mathematical formulas scale with text */
+.tutorial-content .math {
+    font-size: 1.2em; /* Scaled up by 20% */
+}
+
+/* Important text and emphasis */
+strong, b {
+    font-weight: 600;
+    color: #34495e;
+}
+
+/* Mathematical formulas */
+.math {
+    font-size: 1.1em;
+}
+
+/* Tables */
+table {
+    font-size: 1em;
+    line-height: 1.5;
+}
+
+/* Links */
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Custom classes for special text */
+.important-note {
+    font-size: 1.1em;
+    color: #e74c3c;
+    font-weight: 500;
+}
+
+.definition {
+    font-size: 1.1em;
+    color: #27ae60;
+    font-weight: 500;
+}
+
+/* Responsive text sizing */
+@media (max-width: 768px) {
+    body { font-size: 14px; }
+    h1 { font-size: 2.2em; }
+    h2 { font-size: 1.8em; }
+    h3 { font-size: 1.5em; }
+    .tutorial-content { font-size: 1em; }
+}

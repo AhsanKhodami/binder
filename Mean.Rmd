@@ -1,0 +1,199 @@
+---
+title: "Understanding the Concept of Mean in Statistics"
+output: 
+  learnr::tutorial:
+    css: ["custom.css"]
+    includes:
+      in_header: "header.html"
+    theme: cosmo
+    progressive: true
+    allow_skip: true
+runtime: shiny_prerendered
+description: "A comprehensive interactive tutorial on understanding and interpreting the concept of mean in statistics"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(knitr)
+library(DT)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.width = 8,
+  fig.height = 5,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  comment = ""
+)
+
+# Custom styling for better visuals
+tutorial_options(
+  exercise.timelimit = 60,
+  exercise.checker = NULL
+)
+```
+
+## Welcome to the Mean Tutorial {.tabset .tabset-fade .tabset-pills}
+
+### Overview
+
+Welcome to this **comprehensive tutorial** on understanding the concept of Mean in statistics!
+
+**What you'll master:**
+
+- **Definition of Mean**
+
+- **Types of Mean**
+
+- **Applications of Mean**
+
+- **Visualizing Mean**
+
+- **Interpreting Mean in Context**
+
+### Learning Objectives
+
+By the end of this tutorial, you will be able to:
+
+- Define and explain the concept of mean
+
+- Differentiate between types of mean (arithmetic, geometric, harmonic)
+
+- Calculate mean for different datasets
+
+- Visualize mean using plots
+
+- Interpret mean in real-world scenarios
+
+## Understanding the Mean
+
+### What is Mean?
+
+The **mean** is a measure of central tendency that represents the average value of a dataset. It is calculated by summing all the values and dividing by the total number of values.
+
+**Formula:**
+
+$$
+\mu = \frac{\sum x_i}{n}
+$$
+
+where:
+
+- $\mu$ is the mean
+
+- $x_i$ are the individual data points
+
+- $n$ is the total number of data points
+
+### Real-World Example
+
+Consider the following dataset of test scores: **85, 90, 78, 92, 88**.
+
+- Sum of scores: $85 + 90 + 78 + 92 + 88 = 433$
+
+- Total number of scores: $n = 5$
+
+- Mean: $\mu = \frac{433}{5} = 86.6$
+
+The mean test score is **86.6**.
+
+### Visualizing the Mean
+
+```{r mean_plot, fig.cap="Visualization of test scores and their mean. The red line represents the mean value."}
+# Test scores
+test_scores <- c(85, 90, 78, 92, 88)
+
+# Create data frame
+scores_data <- data.frame(
+  Score = test_scores,
+  Student = factor(1:5)
+)
+
+# Create plot
+ggplot(scores_data, aes(x = Student, y = Score)) +
+  geom_bar(stat = "identity", fill = "#3498db", alpha = 0.7) +
+  geom_hline(yintercept = mean(test_scores), color = "#e74c3c", linetype = "dashed", size = 1.2) +
+  labs(title = "Test Scores and Mean",
+       subtitle = "The red dashed line represents the mean value",
+       x = "Student", y = "Score") +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+```
+
+### Types of Mean
+
+There are different types of mean used in statistics:
+
+- **Arithmetic Mean**: The simple average of a dataset.
+
+- **Geometric Mean**: The nth root of the product of n values.
+
+- **Harmonic Mean**: The reciprocal of the arithmetic mean of reciprocals.
+
+### Example Table
+
+| Type of Mean      | Formula                          | Use Case                          |
+|-------------------|----------------------------------|------------------------------------|
+| Arithmetic Mean   | $\mu = \frac{\sum x_i}{n}$      | General average                   |
+| Geometric Mean    | $\mu_g = \sqrt[n]{\prod x_i}$   | Growth rates                      |
+| Harmonic Mean     | $\mu_h = \frac{n}{\sum \frac{1}{x_i}}$ | Rates and ratios                  |
+
+**Explanation:**
+
+This table summarizes the different types of mean, their formulas, and common use cases.
+
+### Quiz Time!
+
+```{r mean_quiz}
+quiz(
+  question("What is the formula for the arithmetic mean?",
+    answer("$$\\mu = \\frac{\\sum x_i}{n}$$", correct = TRUE,
+           message = "Correct! The arithmetic mean is calculated by summing all values and dividing by the total number of values."),
+    answer("$$\\mu = \\sqrt[n]{\\prod x_i}$$"),
+    answer("$$\\mu = \\frac{n}{\\sum \\frac{1}{x_i}}$$"),
+    answer("None of the above"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+
+  question("Which type of mean is best for calculating growth rates?",
+    answer("Arithmetic Mean"),
+    answer("Geometric Mean", correct = TRUE,
+           message = "Correct! The geometric mean is commonly used for growth rates."),
+    answer("Harmonic Mean"),
+    answer("None of the above"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+### Practice Exercise
+
+```{r mean_practice, exercise=TRUE}
+# Practice calculating the mean
+# Dataset: 12, 15, 20, 25, 30
+
+# 1. Calculate the sum of the dataset
+# 2. Count the total number of values
+# 3. Divide the sum by the total number to find the mean
+```
+
+```{r mean_practice-solution}
+# Solution
+# Dataset: 12, 15, 20, 25, 30
+
+# Sum: 12 + 15 + 20 + 25 + 30 = 102
+# Total number: 5
+# Mean: 102 / 5 = 20.4
+
+cat("The mean is 20.4")
+```

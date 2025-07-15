@@ -1,0 +1,1260 @@
+---
+title: "Mastering T-Tests in Psychological Research"
+output: 
+  learnr::tutorial:
+    css: ["custom.css"]
+    includes:
+      in_header: "header.html"
+    theme: cosmo
+    progressive: true
+    allow_skip: true
+    highlight: tango
+    fig_caption: yes
+runtime: shiny_prerendered
+description: "A comprehensive interactive tutorial on conducting and interpreting t-tests in psychological science using R"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(knitr)
+library(DT)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.width = 10,
+  fig.height = 6,
+  fig.align = 'center',
+  warning = FALSE,
+  message = FALSE,
+  comment = ""
+)
+
+# Custom styling for better visuals
+tutorial_options(
+  exercise.timelimit = 60,
+  exercise.checker = NULL
+)
+```
+
+## Welcome to T-Tests Mastery {.tabset .tabset-fade .tabset-pills}
+
+### Overview
+
+Welcome to this **comprehensive tutorial** on conducting t-tests in psychological science using R!
+
+**What you'll master:**
+
+-   **One-sample t-test** - Compare sample mean to known population value
+-   **Independent samples t-test** - Compare two different groups
+-   **Paired samples t-test** - Compare repeated measures
+-   **Effect sizes & power analysis** - Interpret practical significance
+-   **Assumption checking** - Ensure valid results
+
+### Learning Objectives
+
+By the end of this tutorial, you will be able to:
+
+-   Choose the appropriate t-test for your research question
+-   Perform t-tests correctly in R with proper syntax
+-   Interpret statistical output including p-values, confidence intervals, and effect sizes
+-   Check assumptions and handle violations
+-   Create professional visualizations of your results
+-   Report findings following APA guidelines
+
+### Prerequisites
+
+**Required knowledge:** 
+
+- Basic R syntax and data manipulation
+
+- Understanding of descriptive statistics (mean, standard deviation)
+
+- Familiarity with normal distribution concepts
+
+**R packages we'll use:**
+
+``` r
+library(learnr)    # Interactive tutorials
+library(ggplot2)   # Advanced plotting
+library(dplyr)     # Data manipulation
+library(plotly)    # Interactive plots
+```
+
+------------------------------------------------------------------------
+
+## Understanding T-Tests: The Foundation
+
+### What Are T-Tests?
+
+T-tests are **statistical hypothesis tests** that compare means and determine if observed differences are statistically significant or due to random chance.
+
+**Key Concepts:**
+
+1. [**Null Hypothesis ($H_0$)**]: No difference exists (Click to learn more about Null Hypothesis)
+
+2. **Alternative Hypothesis ($H_1$)**: A difference exists
+
+3. **p-value**: Probability of observing results if H₀ is true
+
+4. **$\alpha$-level**: Threshold for significance (typically 0.05)
+
+### When to Use Each T-Test
+
+### Choosing the Right T-Test
+
+Selecting the correct t-test depends on your research design and data structure:
+
+- **One-sample t-test:** Use when comparing the mean of a single group to a known or hypothesized value (e.g., population mean).
+- **Independent samples t-test:** Use when comparing the means of two separate, unrelated groups (e.g., treatment vs. control).
+  - If group variances are equal, use the standard (Student's) t-test.
+  - If group variances are unequal, use Welch's t-test (the default in R).
+- **Paired samples t-test:** Use when comparing two related measurements from the same participants (e.g., pre-test vs. post-test, or matched pairs).
+
+**Summary Table:**
+
+| Scenario                         z        | Test Type                  |
+|-------------------------------------------|----------------------------|
+| One group vs. population value           | One-sample t-test          |
+| Two unrelated groups                     | Independent samples t-test |
+| Two related measurements (same subjects) | Paired samples t-test      |
+
+Always check assumptions (normality, independence, and for independent t-tests, equal variances) before choosing your test.
+
+### Quick Knowledge Check
+
+```{r intro_quiz}
+quiz(
+  question("What does the p-value represent in a t-test?",
+    answer("The probability that the null hypothesis is true"),
+    answer("The probability of observing your data (or more extreme) if the null hypothesis is true", 
+           correct = TRUE, message = "Excellent! The p-value is the probability of observing results as extreme or more extreme than what we found, assuming H₀ is true."),
+    answer("The probability that your alternative hypothesis is correct"),
+    answer("The size of the effect you found"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  
+  question("Which assumption is common to ALL t-tests?",
+    answer("Equal variances between groups"),
+    answer("Independence of observations", correct = TRUE,
+           message = "Correct! All t-tests require that observations are independent of each other."),
+    answer("Equal sample sizes"),
+    answer("Linear relationship between variables"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  )
+)
+```
+
+------------------------------------------------------------------------
+
+## One-Sample T-Test: Testing Against a Known Standard
+
+### Concept & Applications
+
+A **one-sample t-test** compares your sample mean to a known population value or theoretical standard.
+
+**Common applications in psychology:** - Testing if therapy effectiveness differs from established norms - Comparing cognitive test scores to population averages - Evaluating if reaction times differ from baseline measurements
+
+**Formula:**\
+$$
+t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}
+$$
+
+Where: - $\bar{x}$ = sample mean\
+- $\mu_{0}$ = hypothesized population mean\
+- $s$ = sample standard deviation\
+- $n$ = sample size
+
+Lets take a look at this matter with a simple math example:
+
+Let's use a simple example with 5 data points:
+
+Suppose our sample is: **7, 8, 6, 9, 10**\
+The hypothesized population mean ($\mu_0$) is **6**.
+
+-   Sample mean ($\bar{x}$):\
+    $$(7 + 8 + 6 + 9 + 10) / 5 = 40 / 5 = 8$$
+
+-   Sample standard deviation ($s$):\
+    $$s = \sqrt{\frac{(7-8)^2 + (8-8)^2 + (6-8)^2 + (9-8)^2 + (10-8)^2}{5-1}}$$\
+    $$= \sqrt{\frac{1^2 + 0^2 + (-2)^2 + 1^2 + 2^2}{4}}$$ $$= \sqrt{\frac{1 + 0 + 4 + 1 + 4}{4}}$$\
+    $$= \sqrt{\frac{10}{4}} = \sqrt{2.5} \approx 1.58$$
+
+-   Sample size ($n$): **5**
+
+-   Calculate $t$ statistic:\
+    $$t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} = \frac{8 - 6}{1.58 / \sqrt{5}} = \frac{2}{1.58 / 2.236} = \frac{2}{0.707} \approx 2.83$$
+
+So, the $t$ statistic is **2.83** for this sample.
+
+Let's analyze stress levels in psychology graduate students compared to the general population (μ = 6.0).
+
+```{r one_sample_setup, exercise=TRUE, exercise.lines=8}
+# Stress levels (1-10 scale) from 15 psychology graduate students
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# First, let's explore our data
+cat("Sample size:", length(stress_scores), "\n")
+cat("Sample mean:", round(mean(stress_scores), 2), "\n")
+cat("Sample SD:", round(sd(stress_scores), 2), "\n")
+cat("Population mean:", 6.0, "\n")
+```
+
+```{r one_sample_setup-solution}
+# Stress levels (1-10 scale) from 15 psychology graduate students
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# First, let's explore our data
+cat("Sample size:", length(stress_scores), "\n")
+cat("Sample mean:", round(mean(stress_scores), 2), "\n")
+cat("Sample SD:", round(sd(stress_scores), 2), "\n")
+cat("Population mean:", 6.0, "\n")
+```
+
+### Visualize the Data
+
+```{r one_sample_viz, exercise=TRUE, exercise.lines=12}
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# Create a comprehensive visualization
+library(ggplot2)
+library(dplyr)
+
+# Prepare data for plotting
+plot_data <- data.frame(stress = stress_scores)
+
+ggplot(plot_data, aes(x = stress)) +
+  geom_histogram(bins = 8, fill = "#3498db", alpha = 0.7, color = "white") +
+  geom_vline(xintercept = mean(stress_scores), color = "#e74c3c", 
+             linetype = "dashed", size = 1.2, alpha = 0.8) +
+  geom_vline(xintercept = 6.0, color = "#27ae60", 
+             linetype = "solid", size = 1.2, alpha = 0.8) +
+  labs(title = "Distribution of Stress Scores",
+       subtitle = "Red dashed line = Sample mean | Green solid line = Population mean",
+       x = "Stress Level (1-10 scale)", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+### Perform the One-Sample T-Test
+
+```{r one_sample_test, exercise=TRUE, exercise.lines=10, exercise.hint="Use t.test(data, mu = population_mean)"}
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# Perform one-sample t-test
+# H₀: μ = 6.0 (no difference from general population)
+# H₁: μ ≠ 6.0 (psychology grad students differ)
+
+result <- t.test(stress_scores, mu = 6.0)
+print(result)
+
+# Calculate effect size (Cohen's d)
+cohens_d <- (mean(stress_scores) - 6.0) / sd(stress_scores)
+cat("\nCohen's d (effect size):", round(cohens_d, 3))
+```
+
+```{r one_sample_test-solution}
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# Perform one-sample t-test
+result <- t.test(stress_scores, mu = 6.0)
+print(result)
+
+# Calculate effect size (Cohen's d)
+cohens_d <- (mean(stress_scores) - 6.0) / sd(stress_scores)
+cat("\nCohen's d (effect size):", round(cohens_d, 3))
+```
+
+### Check Assumptions
+
+```{r one_sample_assumptions, exercise=TRUE, exercise.lines=15}
+stress_scores <- c(7.2, 8.1, 6.8, 7.5, 8.3, 6.9, 7.8, 8.0, 7.1, 6.7, 
+                   7.9, 8.2, 7.4, 6.5, 7.6)
+
+# Check normality assumption
+library(ggplot2)
+
+# Q-Q plot for normality
+qqplot_data <- data.frame(stress = stress_scores)
+
+ggplot(qqplot_data, aes(sample = stress)) +
+  stat_qq() + stat_qq_line(color = "#e74c3c") +
+  labs(title = "Q-Q Plot: Checking Normality Assumption",
+       x = "Theoretical Quantiles", y = "Sample Quantiles") +
+  theme_minimal()
+
+# Shapiro-Wilk test for normality
+shapiro_result <- shapiro.test(stress_scores)
+cat("Shapiro-Wilk normality test:")
+cat("\nW =", round(shapiro_result$statistic, 4))
+cat("\np-value =", round(shapiro_result$p.value, 4))
+cat("\nInterpretation:", ifelse(shapiro_result$p.value > 0.05, 
+                                "Data appears normally distributed (p > 0.05)", 
+                                "Data may not be normally distributed (p ≤ 0.05)"))
+```
+
+### One-Sample T-Test Quiz
+
+```{r one_sample_quiz}
+quiz(
+  question("Based on our stress level analysis, what can we conclude?",
+    answer("Psychology grad students have significantly higher stress than the general population", 
+           correct = TRUE, message = "Correct! The t-test showed p < 0.05, and the sample mean (7.45) was higher than the population mean (6.0)."),
+    answer("Psychology grad students have the same stress as the general population"),
+    answer("We need more data to make any conclusions"),
+    answer("The effect size is too small to be meaningful"),
+    allow_retry = TRUE
+  ),
+  
+  question("What does Cohen's d = 2.68 indicate about effect size?",
+    answer("Small effect (practically insignificant)"),
+    answer("Medium effect (moderate practical significance)"),
+    answer("Large effect (high practical significance)", correct = TRUE,
+           message = "Excellent! Cohen's d > 0.8 indicates a large effect size, meaning the difference is not only statistically significant but also practically meaningful."),
+    answer("The calculation is incorrect"),
+    allow_retry = TRUE
+  ),
+  
+  question("If the Shapiro-Wilk test p-value is 0.15, what does this mean?",
+    answer("The data is definitely normally distributed"),
+    answer("We fail to reject the assumption of normality", correct = TRUE,
+           message = "Correct! A p-value > 0.05 means we don't have sufficient evidence to reject the normality assumption."),
+    answer("The data is not normally distributed"),
+    answer("We need to use a non-parametric test"),
+    allow_retry = TRUE
+  )
+)
+```
+
+------------------------------------------------------------------------
+
+##  Independent Samples T-Test: Comparing Two Groups
+
+### Concept & Applications
+
+**Independent samples t-test** compares means between two separate, unrelated groups.
+
+**Common applications:** - Comparing treatment vs. control groups - Male vs. female performance differences\
+- Different therapy approaches effectiveness - Pre-intervention group differences
+
+**Key assumptions:** 1. Independence of observations 2. Normality of data in both groups\
+3. Homogeneity of variance (equal variances)
+
+###  Hands-On Exercise: Therapy Effectiveness Study
+
+Let's compare the effectiveness of Cognitive Behavioral Therapy (CBT) vs. Psychodynamic Therapy on depression scores.
+
+```{r independent_data_setup, exercise=TRUE, exercise.lines=15}
+# Set seed for reproducibility
+set.seed(42)
+
+# Simulate depression scores (Beck Depression Inventory: 0-63 scale)
+# Lower scores = less depression (better outcome)
+
+# CBT group (n=25): Generally more effective
+cbt_scores <- round(rnorm(25, mean = 12.3, sd = 4.2), 1)
+
+# Psychodynamic group (n=23): Slightly less effective  
+psycho_scores <- round(rnorm(23, mean = 16.8, sd = 5.1), 1)
+
+# Create comprehensive dataset
+therapy_data <- data.frame(
+  depression_score = c(cbt_scores, psycho_scores),
+  therapy_type = rep(c("CBT", "Psychodynamic"), c(25, 23)),
+  participant_id = 1:48
+)
+
+# Display summary statistics
+library(dplyr)
+summary_stats <- therapy_data %>%
+  group_by(therapy_type) %>%
+  summarise(
+    n = n(),
+    mean = round(mean(depression_score), 2),
+    sd = round(sd(depression_score), 2),
+    median = median(depression_score),
+    min = min(depression_score),
+    max = max(depression_score)
+  )
+
+print(summary_stats)
+```
+
+### Visualize Group Differences
+
+```{r independent_visualization, exercise=TRUE, exercise.lines=20}
+set.seed(42)
+cbt_scores <- round(rnorm(25, mean = 12.3, sd = 4.2), 1)
+psycho_scores <- round(rnorm(23, mean = 16.8, sd = 5.1), 1)
+
+therapy_data <- data.frame(
+  depression_score = c(cbt_scores, psycho_scores),
+  therapy_type = rep(c("CBT", "Psychodynamic"), c(25, 23))
+)
+
+library(ggplot2)
+
+# Create a comprehensive comparison plot
+p1 <- ggplot(therapy_data, aes(x = therapy_type, y = depression_score, fill = therapy_type)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = 16, outlier.size = 2) +
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 4, fill = "white") +
+  scale_fill_manual(values = c("CBT" = "#3498db", "Psychodynamic" = "#e74c3c")) +
+  labs(title = "Depression Scores by Therapy Type",
+       subtitle = "Lower scores indicate better outcomes (less depression)",
+       x = "Therapy Type", y = "Depression Score (BDI-II)",
+       caption = "White diamond = group mean") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 14, face = "bold"))
+
+print(p1)
+
+# Show group means
+group_means <- aggregate(depression_score ~ therapy_type, therapy_data, mean)
+print(group_means)
+```
+
+### Check Assumptions Before Testing
+
+```{r independent_assumptions, exercise=TRUE, exercise.lines=20}
+set.seed(42)
+cbt_scores <- round(rnorm(25, mean = 12.3, sd = 4.2), 1)
+psycho_scores <- round(rnorm(23, mean = 16.8, sd = 5.1), 1)
+
+therapy_data <- data.frame(
+  depression_score = c(cbt_scores, psycho_scores),
+  therapy_type = rep(c("CBT", "Psychodynamic"), c(25, 23))
+)
+
+# 1. Check normality for each group
+cat("=== NORMALITY TESTS ===\n")
+cbt_data <- therapy_data$depression_score[therapy_data$therapy_type == "CBT"]
+psycho_data <- therapy_data$depression_score[therapy_data$therapy_type == "Psychodynamic"]
+
+shapiro_cbt <- shapiro.test(cbt_data)
+shapiro_psycho <- shapiro.test(psycho_data)
+
+cat("CBT group - Shapiro-Wilk: W =", round(shapiro_cbt$statistic, 4), 
+    ", p =", round(shapiro_cbt$p.value, 4), "\n")
+cat("Psychodynamic group - Shapiro-Wilk: W =", round(shapiro_psycho$statistic, 4), 
+    ", p =", round(shapiro_psycho$p.value, 4), "\n\n")
+
+# 2. Check homogeneity of variance (Levene's test)
+cat("=== VARIANCE HOMOGENEITY ===\n")
+var_cbt <- var(cbt_data)
+var_psycho <- var(psycho_data)
+f_ratio <- max(var_cbt, var_psycho) / min(var_cbt, var_psycho)
+
+cat("CBT variance:", round(var_cbt, 2), "\n")
+cat("Psychodynamic variance:", round(var_psycho, 2), "\n")
+cat("Variance ratio:", round(f_ratio, 2))
+cat(ifelse(f_ratio < 2, " (acceptable)", " (may violate assumption)"), "\n")
+```
+
+### Perform Independent Samples T-Test
+
+```{r independent_test, exercise=TRUE, exercise.lines=15, exercise.hint="Use t.test(data ~ group) or t.test(group1, group2)"}
+set.seed(42)
+cbt_scores <- round(rnorm(25, mean = 12.3, sd = 4.2), 1)
+psycho_scores <- round(rnorm(23, mean = 16.8, sd = 5.1), 1)
+
+therapy_data <- data.frame(
+  depression_score = c(cbt_scores, psycho_scores),
+  therapy_type = rep(c("CBT", "Psychodynamic"), c(25, 23))
+)
+
+# Perform independent samples t-test
+# H₀: μ_CBT = μ_Psychodynamic (no difference between therapies)
+# H₁: μ_CBT ≠ μ_Psychodynamic (therapies differ in effectiveness)
+
+# Method 1: Formula interface (recommended)
+result1 <- t.test(depression_score ~ therapy_type, data = therapy_data, var.equal = TRUE)
+print(result1)
+
+cat("\n" , "="*50, "\n")
+
+# Calculate effect size (Cohen's d for independent groups)
+mean_diff <- mean(cbt_scores) - mean(psycho_scores)
+pooled_sd <- sqrt(((length(cbt_scores)-1)*var(cbt_scores) + 
+                   (length(psycho_scores)-1)*var(psycho_scores)) / 
+                  (length(cbt_scores) + length(psycho_scores) - 2))
+cohens_d <- mean_diff / pooled_sd
+
+cat("Effect size (Cohen's d):", round(cohens_d, 3))
+cat("\nInterpretation:", 
+    ifelse(abs(cohens_d) < 0.2, "Negligible effect",
+    ifelse(abs(cohens_d) < 0.5, "Small effect",
+    ifelse(abs(cohens_d) < 0.8, "Medium effect", "Large effect"))))
+```
+
+```{r independent_test-solution}
+set.seed(42)
+cbt_scores <- round(rnorm(25, mean = 12.3, sd = 4.2), 1)
+psycho_scores <- round(rnorm(23, mean = 16.8, sd = 5.1), 1)
+
+therapy_data <- data.frame(
+  depression_score = c(cbt_scores, psycho_scores),
+  therapy_type = rep(c("CBT", "Psychodynamic"), c(25, 23))
+)
+
+# Perform independent samples t-test
+result1 <- t.test(depression_score ~ therapy_type, data = therapy_data, var.equal = TRUE)
+print(result1)
+
+# Calculate effect size (Cohen's d)
+mean_diff <- mean(cbt_scores) - mean(psycho_scores)
+pooled_sd <- sqrt(((length(cbt_scores)-1)*var(cbt_scores) + 
+                   (length(psycho_scores)-1)*var(psycho_scores)) / 
+                  (length(cbt_scores) + length(psycho_scores) - 2))
+cohens_d <- mean_diff / pooled_sd
+cat("\nCohen's d:", round(cohens_d, 3))
+```
+
+### Independent Samples T-Test Quiz
+
+```{r independent_quiz}
+quiz(
+  question("What can we conclude from our therapy effectiveness study?",
+    answer("CBT is significantly more effective than Psychodynamic therapy", 
+           correct = TRUE, message = "Correct! CBT showed significantly lower depression scores (better outcome) with p < 0.05."),
+    answer("Both therapies are equally effective"),
+    answer("Psychodynamic therapy is more effective than CBT"),
+    answer("We cannot draw any conclusions from this data"),
+    allow_retry = TRUE
+  ),
+  
+  question("When should you use Welch's t-test instead of Student's t-test?",
+    answer("When sample sizes are equal"),
+    answer("When variances are significantly different between groups", 
+           correct = TRUE, message = "Excellent! Welch's t-test doesn't assume equal variances and is more robust when this assumption is violated."),
+    answer("When data is not normally distributed"),
+    answer("When you want a more conservative test"),
+    allow_retry = TRUE
+  ),
+  
+  question("What does a negative Cohen's d indicate in our therapy study?",
+    answer("The effect size calculation is wrong"),
+    answer("CBT scores are lower than Psychodynamic scores", 
+           correct = TRUE, message = "Correct! A negative Cohen's d means the first group (alphabetically, CBT) has lower scores than the second group."),
+    answer("The difference is not significant"),
+    answer("We need more participants"),
+    allow_retry = TRUE
+  )
+)
+```
+
+------------------------------------------------------------------------
+
+## Paired Samples T-Test: Before-After Comparisons
+
+### Concept & Applications
+
+**Paired samples t-test** compares two related measurements from the same participants at different times or conditions.
+
+**Common applications:** - Pre-test vs. post-test designs - Before vs. after treatment measurements\
+- Comparing two conditions in within-subjects designs - Test-retest reliability studies
+
+**Key advantage:** Controls for individual differences by using each participant as their own control.
+
+### Hands-On Exercise: Mindfulness Training Study
+
+Let's examine the effectiveness of an 8-week mindfulness training program on anxiety levels.
+
+```{r paired_data_setup, exercise=TRUE, exercise.lines=20}
+# Set seed for reproducibility
+set.seed(123)
+
+# Simulate data for 20 participants
+n_participants <- 20
+participant_ids <- paste0("P", sprintf("%02d", 1:n_participants))
+
+# Pre-training anxiety scores (GAD-7: 0-21 scale, higher = more anxiety)
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+
+# Post-training anxiety scores (generally lower due to intervention)
+# Add some individual variation in response to treatment
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pre_anxiety + treatment_effect, 1)
+
+# Ensure scores stay within valid range (0-21)
+post_anxiety <- pmax(0, pmin(21, post_anxiety))
+
+# Create comprehensive dataset
+mindfulness_data <- data.frame(
+  participant = participant_ids,
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+# Display first 10 participants
+head(mindfulness_data, 10)
+
+cat("\n=== SUMMARY STATISTICS ===")
+cat("\nPre-training mean:", round(mean(pre_anxiety), 2))
+cat("\nPost-training mean:", round(mean(post_anxiety), 2))
+cat("\nMean change:", round(mean(mindfulness_data$change_score), 2))
+cat("\nSD of change scores:", round(sd(mindfulness_data$change_score), 2))
+```
+
+### Visualize the Paired Data
+
+```{r paired_visualization, exercise=TRUE, exercise.lines=25}
+set.seed(123)
+n_participants <- 20
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pmax(0, pmin(21, pre_anxiety + treatment_effect)), 1)
+
+mindfulness_data <- data.frame(
+  participant = paste0("P", sprintf("%02d", 1:n_participants)),
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+library(ggplot2)
+library(dplyr)
+
+# Reshape data for plotting
+plot_data <- mindfulness_data %>%
+  select(participant, pre_anxiety, post_anxiety) %>%
+  tidyr::pivot_longer(cols = c(pre_anxiety, post_anxiety), 
+                      names_to = "time_point", 
+                      values_to = "anxiety_score") %>%
+  mutate(time_point = factor(time_point, 
+                            levels = c("pre_anxiety", "post_anxiety"),
+                            labels = c("Pre-Training", "Post-Training")))
+
+# Create before-after plot with connecting lines
+ggplot(plot_data, aes(x = time_point, y = anxiety_score)) +
+  geom_line(aes(group = participant), alpha = 0.4, color = "#34495e") +
+  geom_point(aes(color = time_point), size = 2, alpha = 0.7) +
+  stat_summary(fun = mean, geom = "point", size = 4, shape = 23, 
+               fill = "white", stroke = 2) +
+  stat_summary(fun = mean, geom = "line", aes(group = 1), 
+               size = 2, color = "#e74c3c") +
+  scale_color_manual(values = c("Pre-Training" = "#e74c3c", 
+                               "Post-Training" = "#27ae60")) +
+  labs(title = "Anxiety Scores Before and After Mindfulness Training",
+       subtitle = "Each line represents one participant | Red line = group mean",
+       x = "Time Point", y = "Anxiety Score (GAD-7)",
+       color = "Assessment") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+### Distribution of Change Scores
+
+```{r paired_change_viz, exercise=TRUE, exercise.lines=20}
+set.seed(123)
+n_participants <- 20
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pmax(0, pmin(21, pre_anxiety + treatment_effect)), 1)
+
+mindfulness_data <- data.frame(
+  participant = paste0("P", sprintf("%02d", 1:n_participants)),
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+library(ggplot2)
+
+# Plot change scores distribution
+ggplot(mindfulness_data, aes(x = change_score)) +
+  geom_histogram(bins = 8, fill = "#3498db", alpha = 0.7, color = "white") +
+  geom_vline(xintercept = mean(mindfulness_data$change_score), 
+             color = "#e74c3c", linetype = "dashed", size = 1.2) +
+  geom_vline(xintercept = 0, color = "#34495e", linetype = "solid", size = 1) +
+  labs(title = "Distribution of Change Scores (Post - Pre)",
+       subtitle = "Negative values = improvement (anxiety reduction)",
+       x = "Change in Anxiety Score", y = "Frequency",
+       caption = "Red dashed line = mean change | Black line = no change") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+
+# Count improvements vs. deteriorations
+improvements <- sum(mindfulness_data$change_score < 0)
+no_change <- sum(mindfulness_data$change_score == 0)
+deteriorations <- sum(mindfulness_data$change_score > 0)
+
+cat("Participants who improved:", improvements, "/", n_participants)
+cat("\nParticipants who stayed same:", no_change, "/", n_participants)
+cat("\nParticipants who deteriorated:", deteriorations, "/", n_participants)
+```
+
+### Check Assumptions for Paired T-Test
+
+```{r paired_assumptions, exercise=TRUE, exercise.lines=15}
+set.seed(123)
+n_participants <- 20
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pmax(0, pmin(21, pre_anxiety + treatment_effect)), 1)
+
+mindfulness_data <- data.frame(
+  participant = paste0("P", sprintf("%02d", 1:n_participants)),
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+# Main assumption: Normality of DIFFERENCE scores
+cat("=== NORMALITY OF CHANGE SCORES ===\n")
+
+# Shapiro-Wilk test on change scores
+shapiro_result <- shapiro.test(mindfulness_data$change_score)
+cat("Shapiro-Wilk test for change scores:")
+cat("\nW =", round(shapiro_result$statistic, 4))
+cat("\np-value =", round(shapiro_result$p.value, 4))
+cat("\nInterpretation:", 
+    ifelse(shapiro_result$p.value > 0.05, 
+           "Change scores appear normally distributed ✓", 
+           "Change scores may not be normally distributed ⚠"))
+
+# Visual check with Q-Q plot
+library(ggplot2)
+ggplot(mindfulness_data, aes(sample = change_score)) +
+  stat_qq() + stat_qq_line(color = "#e74c3c") +
+  labs(title = "Q-Q Plot of Change Scores", 
+       x = "Theoretical Quantiles", y = "Sample Quantiles") +
+  theme_minimal()
+```
+
+### Perform Paired Samples T-Test
+
+```{r paired_test, exercise=TRUE, exercise.lines=15, exercise.hint="Use t.test(x, y, paired = TRUE) or t.test(pre, post, paired = TRUE)"}
+set.seed(123)
+n_participants <- 20
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pmax(0, pmin(21, pre_anxiety + treatment_effect)), 1)
+
+mindfulness_data <- data.frame(
+  participant = paste0("P", sprintf("%02d", 1:n_participants)),
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+# Perform paired samples t-test
+# H₀: μ_difference = 0 (no change in anxiety)
+# H₁: μ_difference ≠ 0 (anxiety levels changed)
+
+cat("=== PAIRED SAMPLES T-TEST ===\n")
+result <- t.test(mindfulness_data$pre_anxiety, 
+                 mindfulness_data$post_anxiety, 
+                 paired = TRUE)
+print(result)
+
+# Alternative method: test change scores against 0
+# result_alt <- t.test(mindfulness_data$change_score, mu = 0)
+
+cat("\n=== EFFECT SIZE ===")
+# Cohen's d for paired samples = mean_difference / sd_difference
+cohens_d <- mean(mindfulness_data$change_score) / sd(mindfulness_data$change_score)
+cat("\nCohen's d:", round(cohens_d, 3))
+cat("\nEffect size interpretation:", 
+    ifelse(abs(cohens_d) < 0.2, "Negligible",
+    ifelse(abs(cohens_d) < 0.5, "Small",
+    ifelse(abs(cohens_d) < 0.8, "Medium", "Large"))))
+
+# 95% Confidence interval for the difference
+cat("\n\n=== CLINICAL SIGNIFICANCE ===")
+cat("\n95% CI for mean change:", 
+    round(result$conf.int[1], 2), "to", round(result$conf.int[2], 2))
+```
+
+```{r paired_test-solution}
+set.seed(123)
+n_participants <- 20
+pre_anxiety <- round(rnorm(n_participants, mean = 14.2, sd = 3.8), 1)
+treatment_effect <- rnorm(n_participants, mean = -4.5, sd = 2.1)
+post_anxiety <- round(pmax(0, pmin(21, pre_anxiety + treatment_effect)), 1)
+
+mindfulness_data <- data.frame(
+  participant = paste0("P", sprintf("%02d", 1:n_participants)),
+  pre_anxiety = pre_anxiety,
+  post_anxiety = post_anxiety,
+  change_score = post_anxiety - pre_anxiety
+)
+
+# Perform paired samples t-test
+result <- t.test(mindfulness_data$pre_anxiety, 
+                 mindfulness_data$post_anxiety, 
+                 paired = TRUE)
+print(result)
+
+# Calculate effect size
+cohens_d <- mean(mindfulness_data$change_score) / sd(mindfulness_data$change_score)
+cat("\nCohen's d:", round(cohens_d, 3))
+```
+
+### Paired Samples T-Test Quiz
+
+```{r paired_quiz}
+quiz(
+  question("What can we conclude about the mindfulness training program?",
+    answer("It significantly reduced anxiety levels", 
+           correct = TRUE, message = "Correct! The paired t-test showed a significant decrease in anxiety scores (p < 0.05)."),
+    answer("It had no effect on anxiety levels"),
+    answer("It increased anxiety levels"),
+    answer("The results are inconclusive"),
+    allow_retry = TRUE
+  ),
+  
+  question("Why is a paired t-test more powerful than an independent t-test for this design?",
+    answer("It uses larger sample sizes"),
+    answer("It controls for individual differences between participants", 
+           correct = TRUE, message = "Excellent! By using each participant as their own control, we reduce variability and increase power to detect true effects."),
+    answer("It has fewer assumptions"),
+    answer("It's always more conservative"),
+    allow_retry = TRUE
+  ),
+  
+  question("What is the degrees of freedom for a paired t-test with 20 participants?",
+    answer("19", correct = TRUE, message = "Correct! For paired t-tests, df = n - 1, where n is the number of pairs (participants)."),
+    answer("20"),
+    answer("38"),
+    answer("39"),
+    allow_retry = TRUE
+  )
+)
+```
+
+------------------------------------------------------------------------
+
+## Advanced Topics: Effect Sizes & Power Analysis
+
+### Understanding Effect Sizes
+
+**Effect size** quantifies the magnitude of the difference between groups, independent of sample size.
+
+**Cohen's d interpretation:** - **Small effect:** d ≈ 0.2 (subtle difference) - **Medium effect:** d ≈ 0.5 (moderate difference)\
+- **Large effect:** d ≈ 0.8 (substantial difference)
+
+### Power Analysis in Practice
+
+```{r power_analysis, exercise=TRUE, exercise.lines=20}
+# Power analysis helps determine appropriate sample sizes
+# Let's calculate power for different scenarios
+
+library(pwr)
+
+cat("=== POWER ANALYSIS FOR T-TESTS ===\n\n")
+
+# Example 1: One-sample t-test
+cat("1. ONE-SAMPLE T-TEST")
+cat("\n   Scenario: Testing if therapy reduces depression scores")
+cat("\n   Expected effect size: d = 0.5 (medium)")
+cat("\n   Significance level: α = 0.05")
+cat("\n   Desired power: 80%")
+
+power_one <- pwr.t.test(d = 0.5, sig.level = 0.05, power = 0.80, type = "one.sample")
+cat("\n   Required sample size:", ceiling(power_one$n), "participants\n\n")
+
+# Example 2: Independent samples t-test
+cat("2. INDEPENDENT SAMPLES T-TEST")
+cat("\n   Scenario: Comparing two therapy groups")
+cat("\n   Expected effect size: d = 0.3 (small-medium)")
+cat("\n   Significance level: α = 0.05")
+cat("\n   Desired power: 80%")
+
+power_ind <- pwr.t.test(d = 0.3, sig.level = 0.05, power = 0.80, type = "two.sample")
+cat("\n   Required sample size:", ceiling(power_ind$n), "per group\n\n")
+
+# Example 3: Paired samples t-test
+cat("3. PAIRED SAMPLES T-TEST")
+cat("\n   Scenario: Pre-post intervention study")
+cat("\n   Expected effect size: d = 0.4")
+cat("\n   Significance level: α = 0.05")
+cat("\n   Desired power: 80%")
+
+power_paired <- pwr.t.test(d = 0.4, sig.level = 0.05, power = 0.80, type = "paired")
+cat("\n   Required sample size:", ceiling(power_paired$n), "participants")
+```
+
+### Effect Size Visualization
+
+```{r effect_size_viz, exercise=TRUE, exercise.lines=25}
+library(ggplot2)
+
+# Create visualization of different effect sizes
+set.seed(42)
+n <- 1000
+
+# Generate data for different effect sizes
+control <- rnorm(n, mean = 0, sd = 1)
+small_effect <- rnorm(n, mean = 0.2, sd = 1)
+medium_effect <- rnorm(n, mean = 0.5, sd = 1)
+large_effect <- rnorm(n, mean = 0.8, sd = 1)
+
+effect_data <- data.frame(
+  value = c(control, small_effect, medium_effect, large_effect),
+  group = rep(c("Control", "Small (d=0.2)", "Medium (d=0.5)", "Large (d=0.8)"), 
+              each = n),
+  effect_size = rep(c("Control", "Small", "Medium", "Large"), each = n)
+)
+
+# Create overlapping density plots
+ggplot(effect_data, aes(x = value, fill = group)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_manual(values = c("Control" = "#95a5a6", 
+                              "Small (d=0.2)" = "#f39c12",
+                              "Medium (d=0.5)" = "#e67e22", 
+                              "Large (d=0.8)" = "#e74c3c")) +
+  labs(title = "Visualizing Different Effect Sizes",
+       subtitle = "Overlap between distributions decreases as effect size increases",
+       x = "Standardized Score", y = "Density",
+       fill = "Effect Size") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+### Advanced T-Test Quiz
+
+```{r advanced_quiz}
+quiz(
+  question("You need 80% power to detect a medium effect (d = 0.5) in an independent samples t-test. Approximately how many participants do you need per group?",
+    answer("25", message = "Close, but not quite enough for 80% power."),
+    answer("32", correct = TRUE, message = "Correct! For d = 0.5, α = 0.05, and 80% power, you need about 32 participants per group."),
+    answer("50", message = "This would give you more than 80% power, which is good but not necessary."),
+    answer("100", message = "This is much more than needed for a medium effect size."),
+    allow_retry = TRUE
+  ),
+  
+  question("Which effect size measure is most appropriate for comparing two means?",
+    answer("Cohen's d", correct = TRUE, message = "Correct! Cohen's d is the standard effect size measure for comparing means between groups."),
+    answer("Eta-squared"),
+    answer("Cramer's V"),
+    answer("Phi coefficient"),
+    allow_retry = TRUE
+  ),
+  
+  question("A study reports Cohen's d = -1.2. What does this mean?",
+    answer("The effect size calculation is incorrect"),
+    answer("There's a large effect, with the first group scoring lower", 
+           correct = TRUE, message = "Correct! The negative sign indicates direction (first group < second group), and |1.2| indicates a large effect."),
+    answer("The effect is not statistically significant"),
+    answer("The sample size was too small"),
+    allow_retry = TRUE
+  )
+)
+```
+
+------------------------------------------------------------------------
+
+## Putting It All Together: Complete Analysis Workflow
+
+### Real-World Example: Comprehensive Study
+
+```{r complete_analysis, exercise=TRUE, exercise.lines=40}
+# SCENARIO: Evaluating a new cognitive training program
+# Research Question: Does cognitive training improve working memory?
+# Design: Randomized controlled trial with pre-post measurements
+
+set.seed(2023)
+
+# Generate realistic data
+n_per_group <- 30
+
+# Control group (practice effects only)
+control_pre <- round(rnorm(n_per_group, mean = 85, sd = 12), 0)
+control_post <- control_pre + rnorm(n_per_group, mean = 2, sd = 4)  # Small practice effect
+
+# Training group (practice + training effects)
+training_pre <- round(rnorm(n_per_group, mean = 86, sd = 13), 0)
+training_post <- training_pre + rnorm(n_per_group, mean = 8, sd = 5)  # Larger improvement
+
+# Create comprehensive dataset
+study_data <- data.frame(
+  participant_id = 1:(2*n_per_group),
+  group = rep(c("Control", "Training"), each = n_per_group),
+  pre_score = c(control_pre, training_pre),
+  post_score = c(control_post, training_post),
+  change_score = c(control_post - control_pre, training_post - training_pre)
+)
+
+cat("=== STUDY OVERVIEW ===")
+cat("\nTotal participants:", nrow(study_data))
+cat("\nControl group:", sum(study_data$group == "Control"))
+cat("\nTraining group:", sum(study_data$group == "Training"))
+
+cat("\n\n=== DESCRIPTIVE STATISTICS ===")
+library(dplyr)
+descriptives <- study_data %>%
+  group_by(group) %>%
+  summarise(
+    n = n(),
+    pre_mean = round(mean(pre_score), 2),
+    pre_sd = round(sd(pre_score), 2),
+    post_mean = round(mean(post_score), 2),
+    post_sd = round(sd(post_score), 2),
+    change_mean = round(mean(change_score), 2),
+    change_sd = round(sd(change_score), 2)
+  )
+print(descriptives)
+
+# Step 1: Check baseline differences (independent t-test)
+cat("\n=== STEP 1: BASELINE COMPARISON ===")
+baseline_test <- t.test(pre_score ~ group, data = study_data)
+cat("\nBaseline t-test p-value:", round(baseline_test$p.value, 4))
+cat(ifelse(baseline_test$p.value > 0.05, 
+           " ✓ Groups similar at baseline", 
+           " ⚠ Groups differ at baseline"))
+
+# Step 2: Analyze change within each group (paired t-tests)
+cat("\n\n=== STEP 2: WITHIN-GROUP CHANGES ===")
+
+control_data <- subset(study_data, group == "Control")
+training_data <- subset(study_data, group == "Training")
+
+control_paired <- t.test(control_data$pre_score, control_data$post_score, paired = TRUE)
+training_paired <- t.test(training_data$pre_score, training_data$post_score, paired = TRUE)
+
+cat("\nControl group change: p =", round(control_paired$p.value, 4))
+cat("\nTraining group change: p =", round(training_paired$p.value, 4))
+
+# Step 3: Compare change scores between groups (independent t-test)
+cat("\n\n=== STEP 3: BETWEEN-GROUP COMPARISON ===")
+change_test <- t.test(change_score ~ group, data = study_data)
+print(change_test)
+
+# Calculate effect size for the main comparison
+control_change_mean <- mean(control_data$change_score)
+training_change_mean <- mean(training_data$change_score)
+pooled_sd_change <- sqrt((var(control_data$change_score) * (n_per_group-1) + 
+                         var(training_data$change_score) * (n_per_group-1)) / 
+                        (2*n_per_group - 2))
+cohens_d_change <- (training_change_mean - control_change_mean) / pooled_sd_change
+
+cat("\n=== EFFECT SIZE ===")
+cat("\nCohen's d for change score difference:", round(cohens_d_change, 3))
+```
+
+### Create Publication-Quality Visualization
+
+```{r publication_plot, exercise=TRUE, exercise.lines=30}
+set.seed(2023)
+n_per_group <- 30
+
+# Recreate the data
+control_pre <- round(rnorm(n_per_group, mean = 85, sd = 12), 0)
+control_post <- control_pre + rnorm(n_per_group, mean = 2, sd = 4)
+training_pre <- round(rnorm(n_per_group, mean = 86, sd = 13), 0)
+training_post <- training_pre + rnorm(n_per_group, mean = 8, sd = 5)
+
+study_data <- data.frame(
+  participant_id = 1:(2*n_per_group),
+  group = rep(c("Control", "Training"), each = n_per_group),
+  pre_score = c(control_pre, training_pre),
+  post_score = c(control_post, training_post),
+  change_score = c(control_post - control_pre, training_post - training_pre)
+)
+
+library(ggplot2)
+library(dplyr)
+
+# Reshape data for plotting
+plot_data <- study_data %>%
+  select(participant_id, group, pre_score, post_score) %>%
+  tidyr::pivot_longer(cols = c(pre_score, post_score), 
+                      names_to = "time_point", 
+                      values_to = "score") %>%
+  mutate(time_point = factor(time_point, 
+                            levels = c("pre_score", "post_score"),
+                            labels = c("Pre-Training", "Post-Training")))
+
+# Create professional plot
+p1 <- ggplot(plot_data, aes(x = time_point, y = score, color = group)) +
+  # Individual participant lines
+  geom_line(aes(group = interaction(participant_id, group)), alpha = 0.3) +
+  # Group means with error bars
+  stat_summary(fun = mean, geom = "point", size = 4, 
+               position = position_dodge(width = 0.1)) +
+  stat_summary(fun = mean, geom = "line", aes(group = group), 
+               size = 2, position = position_dodge(width = 0.1)) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1,
+               position = position_dodge(width = 0.1)) +
+  
+  scale_color_manual(values = c("Control" = "#95a5a6", "Training" = "#3498db")) +
+  labs(title = "Cognitive Training Study Results",
+       subtitle = "Working Memory Scores Before and After Intervention",
+       x = "Assessment Time", y = "Working Memory Score",
+       color = "Group",
+       caption = "Error bars = ±1 SE; Lines show individual participants") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        legend.position = "top")
+
+print(p1)
+
+# Add summary statistics
+summary_stats <- plot_data %>%
+  group_by(group, time_point) %>%
+  summarise(mean_score = round(mean(score), 1),
+            se_score = round(sd(score)/sqrt(n()), 1))
+print(summary_stats)
+```
+
+### APA-Style Results Reporting
+
+```{r apa_reporting, exercise=TRUE, exercise.lines=25}
+set.seed(2023)
+n_per_group <- 30
+
+# Recreate analysis results
+control_pre <- round(rnorm(n_per_group, mean = 85, sd = 12), 0)
+control_post <- control_pre + rnorm(n_per_group, mean = 2, sd = 4)
+training_pre <- round(rnorm(n_per_group, mean = 86, sd = 13), 0)
+training_post <- training_pre + rnorm(n_per_group, mean = 8, sd = 5)
+
+study_data <- data.frame(
+  participant_id = 1:(2*n_per_group),
+  group = rep(c("Control", "Training"), each = n_per_group),
+  pre_score = c(control_pre, training_pre),
+  post_score = c(control_post, training_post),
+  change_score = c(control_post - control_pre, training_post - training_pre)
+)
+
+# Key statistics for reporting
+control_data <- subset(study_data, group == "Control")
+training_data <- subset(study_data, group == "Training")
+
+# Main analysis
+change_test <- t.test(change_score ~ group, data = study_data)
+cohens_d <- (mean(training_data$change_score) - mean(control_data$change_score)) / 
+            sqrt((var(control_data$change_score) + var(training_data$change_score)) / 2)
+
+cat("=== APA-STYLE RESULTS SECTION ===\n\n")
+
+cat("PARTICIPANTS:")
+cat("\nSixty participants were randomly assigned to either a cognitive training")
+cat("\ngroup (n = 30) or a control group (n = 30).")
+
+cat("\n\nDESCRIPTIVE STATISTICS:")
+cat("\nPre-training working memory scores were similar between groups")
+cat(sprintf("\n(Training: M = %.1f, SD = %.1f; Control: M = %.1f, SD = %.1f).",
+           mean(training_data$pre_score), sd(training_data$pre_score),
+           mean(control_data$pre_score), sd(control_data$pre_score)))
+
+cat("\n\nMAIN FINDINGS:")
+cat(sprintf("\nThe training group showed significantly greater improvement"))
+cat(sprintf("\n(M = %.1f points, SD = %.1f) compared to the control group", 
+           mean(training_data$change_score), sd(training_data$change_score)))
+cat(sprintf("\n(M = %.1f points, SD = %.1f), t(%.0f) = %.2f, p %s, d = %.2f.",
+           mean(control_data$change_score), sd(control_data$change_score),
+           change_test$parameter, change_test$statistic,
+           ifelse(change_test$p.value < 0.001, "< .001", 
+                  paste("=", sprintf("%.3f", change_test$p.value))),
+           cohens_d))
+
+cat(sprintf("\nThe 95%% confidence interval for the difference in change scores"))
+cat(sprintf("\nwas [%.1f, %.1f] points.", 
+           change_test$conf.int[1], change_test$conf.int[2]))
+```
+
+------------------------------------------------------------------------
+
+## Final Assessment & Summary
+
+### Comprehensive Final Quiz
+
+```{r final_comprehensive_quiz}
+quiz(
+  question("A researcher wants to test if a new meditation app reduces stress. They measure stress before and after using the app for 30 days in the same 25 participants. Which test should they use?",
+    answer("One-sample t-test"),
+    answer("Independent samples t-test"),
+    answer("Paired samples t-test", correct = TRUE, message = "Correct! This is a pre-post design with the same participants, requiring a paired samples t-test."),
+    answer("Chi-square test"),
+    allow_retry = TRUE,
+    random_answer_order = TRUE
+  ),
+  
+  question("In a study comparing anxiety levels between men and women, you get t(48) = -2.34, p = .023. What can you conclude?",
+    answer("Men have significantly higher anxiety than women"),
+    answer("Women have significantly higher anxiety than men", correct = TRUE, 
+           message = "Correct! The negative t-value indicates the first group (alphabetically) has lower scores than the second group."),
+    answer("There's no significant difference"),
+    answer("The effect size is large"),
+    allow_retry = TRUE
+  ),
+  
+  question("Which assumption is UNIQUE to independent samples t-tests (not required for other t-tests)?",
+    answer("Normality of data"),
+    answer("Independence of observations"),
+    answer("Homogeneity of variance", correct = TRUE, 
+           message = "Excellent! Equal variances assumption is specific to independent samples t-tests. Paired and one-sample t-tests don't require this."),
+    answer("Random sampling"),
+    allow_retry = TRUE
+  ),
+  
+  question("A Cohen's d of 0.3 in a therapy effectiveness study indicates:",
+    answer("A negligible effect"),
+    answer("A small-to-medium effect", correct = TRUE, 
+           message = "Correct! Cohen's d = 0.3 falls between small (0.2) and medium (0.5) effect sizes."),
+    answer("A large effect"),
+    answer("An unreliable result"),
+    allow_retry = TRUE
+  ),
+  
+  question("To achieve 80% power for detecting a large effect (d = 0.8) in an independent samples t-test, approximately how many participants do you need per group?",
+    answer("15"),
+    answer("21", correct = TRUE, 
+           message = "Correct! For d = 0.8, α = 0.05, and 80% power, you need about 21 participants per group."),
+    answer("30"),
+    answer("50"),
+    allow_retry = TRUE
+  )
+)
+```
+
+###  Congratulations!
+
+You've successfully completed the **T-Tests Mastery Tutorial**!
+
+###  What You've Accomplished
+
+-   **Mastered three types of t-tests** and when to use each\
+-   **Performed complete statistical analyses** including assumption checking\
+-   **Calculated and interpreted effect sizes** for practical significance\
+-   **Created professional visualizations** of your results\
+-   **Learned power analysis** for study planning\
+-   **Practiced APA-style reporting** of statistical results
+
+###  Practice Recommendations
+
+1.  **Apply these skills** to your own research data
+2.  **Practice with different datasets** to build confidence
+3.  **Check assumptions** before running any t-test
+4.  **Always report effect sizes** alongside p-values
+5.  **Consider power analysis** when planning studies
+
+###  Next Steps
+
+-   Explore **ANOVA** for comparing 3+ groups
+-   Learn about **non-parametric alternatives** (Mann-Whitney U, Wilcoxon)
+-   Study **multiple comparisons** and correction methods
+-   Investigate **Bayesian t-tests** for alternative approaches
+
+### Key Takeaways
+
+> **"Statistical significance is not the same as practical significance"**
+
+Remember to always consider: - **Effect sizes** (how big is the difference?) - **Confidence intervals** (what's the range of plausible values?) - **Clinical/practical significance** (does this matter in the real world?) - **Replication** (can we trust this finding?)
+
+------------------------------------------------------------------------
+
+*Thank you for completing this tutorial! Keep practicing and applying these skills to become a more confident researcher.* 
